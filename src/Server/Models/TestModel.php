@@ -68,4 +68,15 @@ class TestModel extends Model
         $result = yield $this->mysql_pool->dbQueryBuilder->replace('account')->where('uid',91)->set(['status'=>1])->coroutineSend();
         print_r($result);
     }
+    
+    public function testMember()
+    {
+        $result = yield $this->mysql_pool->dbQueryBuilder->select('*')->from('ecm_member')->orderBy('user_id', \Server\DataBase\Miner::ORDER_BY_DESC)->limit(10)->coroutineSend();
+        print_r($result);
+//        return $result->getResult();
+//        $this->mysql_pool->dbQueryBuilder->select('*')->from('ecm_member')->orderBy('user_id', \Server\DataBase\Miner::ORDER_BY_DESC)->limit(10);
+//        $this->mysql_pool->query(function ($result) {
+//            print_r($result->getResult());
+//        });
+    }
 }

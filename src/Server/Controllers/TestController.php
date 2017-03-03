@@ -210,5 +210,12 @@ class TestController extends Controller
     {
         return $this->is_destroy;
     }
+    
+    public function http_testmember()
+    {
+        $this->testModel = $this->loader->model('TestModel', $this);
+        $rs = yield $this->testModel->testMember();
+        $this->http_output->end(var_export($rs, true));
+    }
 
 }
