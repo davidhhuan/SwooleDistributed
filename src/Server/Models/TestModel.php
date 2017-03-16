@@ -44,15 +44,19 @@ class TestModel extends Model
         });
     }
 
-    public function test_exception()
-    {
-        throw new SwooleException('test');
-    }
-
     public function test_exceptionII()
     {
+        try {
+            yield $this->test_exception();
+        } catch (\Exception $e) {
+            print_r(1);
+        }
+    }
+
+    public function test_exception()
+    {
         $result = yield $this->redis_pool->coroutineSend('get', 'test');
-        $result = yield $this->mysql_pool->dbQueryBuilder->select('*')->where('uid', 10303)->coroutineSend();
+        throw new SwooleException('test');
     }
 
     public function test_task()
@@ -78,6 +82,18 @@ class TestModel extends Model
                 ->orderBy('user_id', \Server\Asyn\Mysql\Miner::ORDER_BY_DESC)
                 ->limit(1000)
                 ->coroutineSend();
+    }
+
+    public function testRedis()
+    {
+        $result = yield $this->redis_pool->getCoroutine()->get('test');
+        return 1;
+    }
+
+    public function testMysql()
+    {
+        $result = yield $this->mysql_pool->dbQueryBuilder->select('*')->from('task')
+            ->whereIn('type', [0, 1])->where('status', 1)->coroutineSend();
         return $result;
     }
 }
