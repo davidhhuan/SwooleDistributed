@@ -224,4 +224,11 @@ class TestController extends Controller
         $lock->destroy();
         $this->http_output->end(1);
     }
+    
+    public function http_testMember()
+    {
+        $model = $this->loader->model('TestModel', $this);
+        $result = yield $model->testMember();
+        $this->http_output->end($result);
+    }
 }
