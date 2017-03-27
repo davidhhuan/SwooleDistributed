@@ -26,6 +26,13 @@ class TestController extends Controller
      */
     public $testModel;
 
+    public function http_mysql()
+    {
+        $model = $this->loader->model('TestModel', $this);
+        $result = yield $model->testMysql();
+        $this->http_output->end($result);
+    }
+
     /**
      * tcp的测试
      */
@@ -258,8 +265,8 @@ class TestController extends Controller
     public function http_testTask()
     {
         $testTask = $this->loader->task('TestTask', $this);
-        $testTask->testLong();
-        $result = yield $testTask->coroutineSend()->setTimeout(20000);
+        $testTask->testMysql();
+        $result = yield $testTask->coroutineSend();
         $this->http_output->end($result);
     }
 
@@ -277,4 +284,5 @@ class TestController extends Controller
         $reuslt = yield $rest->add(1, 2);
         $this->http_output->end($reuslt);
     }
+
 }

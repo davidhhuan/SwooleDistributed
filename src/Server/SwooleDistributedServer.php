@@ -188,7 +188,7 @@ abstract class SwooleDistributedServer extends SwooleWebSocketServer
         $this->tid_pid_table = new \swoole_table(1024);
         $this->tid_pid_table->column('pid', \swoole_table::TYPE_INT, 8);
         $this->tid_pid_table->column('des', \swoole_table::TYPE_STRING, 50);
-        $this->tid_pid_table->column('st', \swoole_table::TYPE_INT, 8);
+        $this->tid_pid_table->column('start_time', \swoole_table::TYPE_INT, 8);
         $this->tid_pid_table->create();
         //创建task用的锁
         $this->task_lock = new \swoole_lock(SWOOLE_MUTEX);
@@ -196,6 +196,12 @@ abstract class SwooleDistributedServer extends SwooleWebSocketServer
         ReloadHelp::startProcess();
         //consul进程
         ConsulHelp::startProcess();
+        //开启一个UDP用于发graylog
+        if($this->config->get('log.active')=='graylog'){
+            $udp_port =  $this->server->listen($this->config['tcp']['socket'], $this->config['log']['graylog']['udp_send_port'], SWOOLE_SOCK_UDP);
+            $udp_port->on('packet',function (){
+            });
+        }
         if ($this->config->get('use_dispatch')) {
             //创建dispatch端口用于连接dispatch
             $this->dispatch_port = $this->server->listen($this->config['tcp']['socket'], $this->config['server']['dispatch_port'], SWOOLE_SOCK_TCP);
@@ -243,20 +249,6 @@ abstract class SwooleDistributedServer extends SwooleWebSocketServer
     }
 
     /**
-     * 设置服务器配置参数
-     * @return array
-     */
-    public function setServerSet()
-    {
-        $set = $this->config->get('server.set', []);
-        $set = array_merge($set, $this->probuf_set);
-        $set = array_merge($set, $this->overrideSetConfig);
-        $this->worker_num = $set['worker_num'];
-        $this->task_num = $set['task_worker_num'];
-        return $set;
-    }
-
-    /**
      * 发送给所有的进程，$callStaticFuc为静态方法,会在每个进程都执行
      * @param $type
      * @param $uns_data
@@ -271,6 +263,41 @@ abstract class SwooleDistributedServer extends SwooleWebSocketServer
         }
         //自己的进程是收不到消息的所以这里执行下
         call_user_func($callStaticFuc, $uns_data);
+    }
+
+    /**
+     * 设置服务器配置参数
+     * @return array
+     */
+    public function setServerSet()
+    {
+        $set = $this->config->get('server.set', []);
+        $set = array_merge($set, $this->probuf_set);
+        $set = array_merge($set, $this->overrideSetConfig);
+        $this->worker_num = $set['worker_num'];
+        $this->task_num = $set['task_worker_num'];
+        return $set;
+    }
+
+    /**
+     * 被DispatchHelp调用
+     * 移除dispatch
+     * @param $fd
+     */
+    public function removeDispatch($fd)
+    {
+        unset($this->dispatchClientFds[$fd]);
+    }
+
+    /**
+     * 被DispatchHelp调用
+     * 添加一个dispatch
+     * @param $data
+     */
+    public function addDispatch($data)
+    {
+        $this->USID = $data['usid'];
+        $this->dispatchClientFds[$data['fd']] = $data['fd'];
     }
 
     /**
@@ -441,27 +468,6 @@ abstract class SwooleDistributedServer extends SwooleWebSocketServer
             $usid = $this->getRedis()->hGet(SwooleMarco::redis_uid_usid_hash_name, $uid);
             $this->sendToDispatchMessage(SwooleMarco::MSG_TYPE_KICK_UID, ['usid' => $usid, 'uid' => $uid]);
         }
-    }
-
-    /**
-     * 被DispatchHelp调用
-     * 移除dispatch
-     * @param $fd
-     */
-    public function removeDispatch($fd)
-    {
-        unset($this->dispatchClientFds[$fd]);
-    }
-
-    /**
-     * 被DispatchHelp调用
-     * 添加一个dispatch
-     * @param $data
-     */
-    public function addDispatch($data)
-    {
-        $this->USID = $data['usid'];
-        $this->dispatchClientFds[$data['fd']] = $data['fd'];
     }
 
     /**
@@ -815,6 +821,7 @@ abstract class SwooleDistributedServer extends SwooleWebSocketServer
 
     /**
      * 获取服务器上正在运行的Task
+     * @return array
      */
     public function getServerAllTaskMessage()
     {
@@ -822,6 +829,7 @@ abstract class SwooleDistributedServer extends SwooleWebSocketServer
         foreach ($this->tid_pid_table as $id => $row) {
             if ($id != 0) {
                 $row['task_id'] = $id;
+                $row['run_time'] = time() - $row['start_time'];
                 $tasks[] = $row;
             }
         }

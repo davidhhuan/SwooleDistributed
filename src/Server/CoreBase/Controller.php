@@ -126,7 +126,10 @@ class Controller extends CoreBase
         } else {
             $context = ['request_id' => time() . crc32($controller_name . $method_name . getTickTime() . rand(1, 10000000))];
         }
+        $context['controller_name'] = $controller_name;
+        $context['method_name'] = "$controller_name:$method_name";
         $this->setContext($context);
+        $this->start_run_time = microtime(true);
     }
 
     /**
@@ -157,7 +160,7 @@ class Controller extends CoreBase
     {
         $this->log($e->getMessage() . "\n" . $e->getTraceAsString(), Logger::ERROR);
         if ($e instanceof SwooleException) {
-            if ($e->others != null) {
+            if($e->others!=null) {
                 $this->log($e->others, Logger::NOTICE);
             }
         }
@@ -203,12 +206,14 @@ class Controller extends CoreBase
      */
     public function destroy()
     {
+        $this->context['execution_time'] = (microtime(true) - $this->start_run_time)*1000;
+        $this->log('Efficiency monitor',Logger::INFO);
         parent::destroy();
-        unset($this->fd);
-        unset($this->uid);
-        unset($this->client_data);
-        unset($this->request);
-        unset($this->response);
+        $this->fd = null;
+        $this->uid = null;
+        $this->client_data = null;
+        $this->request = null;
+        $this->response = null;
         $this->http_input->reset();
         $this->http_output->reset();
         ControllerFactory::getInstance()->revertController($this);
