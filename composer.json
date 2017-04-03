@@ -12,7 +12,8 @@
     "psr-4": {
       "Server\\": "src/Server",
       "app\\": "src/app",
-      "test\\": "src/test"
+      "test\\": "src/test", 
+      "Yoke\\": "src/Yoke"
     },
     "files": [
       "src/Server/helpers/Common.php"
