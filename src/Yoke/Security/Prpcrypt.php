@@ -48,39 +48,39 @@ class Prpcrypt
      * @param string $plaintext 需要加密的明文
      * @return string 加密后的密文
      */
-    public function encrypt($plaintext, $appid)
+    public function encrypt($plaintext)
     {
-        try {
-            //获得16位随机字符串，填充到明文之前
-            $random = StringUtil::getRandomStr();
-            $plaintext = $random . pack("N", strlen($plaintext)) . $plaintext . $appid;
-            // 网络字节序
-            $size = mcrypt_get_block_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_CBC);
-            $module = mcrypt_module_open(MCRYPT_RIJNDAEL_256, '', MCRYPT_MODE_CBC, '');
-            //使用自定义的填充方式对明文进行补位填充
-            $plaintext = PKCS7Encoder::encode($plaintext);
-            mcrypt_generic_init($module, $this->getKey(), $this->getIv());
-            //加密
-            $encrypted = mcrypt_generic($module, $plaintext);
-            mcrypt_generic_deinit($module);
-            mcrypt_module_close($module);
-            //使用BASE64对加密后的字符串进行编码
-            $encrypted = base64_encode($encrypted);
-            return ResultUtil::returnRs(StatusCode::SUCCESS, ['encrypt' => $encrypted]);
-        } catch (Exception $e) {
-            return ResultUtil::returnRs(StatusCode::ENCRYPT_AES_ERROR);
-        }
-        
-//        //获得16位随机字符串，填充到明文之前
-//        $random = StringUtil::getRandomStr();
-//        $plaintext = $random . pack("N", strlen($plaintext)) . $plaintext . $appid;
-//        
-//        $ciphertext = openssl_encrypt($plaintext,  'AES-256-CBC', $this->getKey(), OPENSSL_RAW_DATA, $this->getIv());
-//        if ($ciphertext === false) {
+//        try {
+//            //获得16位随机字符串，填充到明文之前
+//            $random = StringUtil::getRandomStr();
+//            $plaintext = $random . pack("N", strlen($plaintext)) . $plaintext;
+//            // 网络字节序
+//            $size = mcrypt_get_block_size(MCRYPT_RIJNDAEL_256, MCRYPT_MODE_CBC);
+//            $module = mcrypt_module_open(MCRYPT_RIJNDAEL_256, '', MCRYPT_MODE_CBC, '');
+//            //使用自定义的填充方式对明文进行补位填充
+//            $plaintext = PKCS7Encoder::encode($plaintext);
+//            mcrypt_generic_init($module, $this->getKey(), $this->getIv());
+//            //加密
+//            $encrypted = mcrypt_generic($module, $plaintext);
+//            mcrypt_generic_deinit($module);
+//            mcrypt_module_close($module);
+//            //使用BASE64对加密后的字符串进行编码
+//            $encrypted = base64_encode($encrypted);
+//            return ResultUtil::returnRs(StatusCode::SUCCESS, ['encrypt' => $encrypted]);
+//        } catch (Exception $e) {
 //            return ResultUtil::returnRs(StatusCode::ENCRYPT_AES_ERROR);
-//        } else {
-//            return ResultUtil::returnRs(StatusCode::SUCCESS, ['encrypt' => $ciphertext]);
 //        }
+        
+        //获得16位随机字符串，填充到明文之前
+        $random = StringUtil::getRandomStr();
+        $plaintext = $random . pack("N", strlen($plaintext)) . $plaintext;
+        
+        $ciphertext = openssl_encrypt($plaintext,  'AES-256-CBC', $this->getKey(), OPENSSL_RAW_DATA, $this->getIv());
+        if ($ciphertext === false) {
+            return ResultUtil::returnRs(StatusCode::ENCRYPT_AES_ERROR);
+        } else {
+            return ResultUtil::returnRs(StatusCode::SUCCESS, ['encrypt' => base64_encode($ciphertext)]);
+        }
         
     }
     
@@ -89,45 +89,59 @@ class Prpcrypt
      * @param string $ciphertext 需要解密的密文
      * @return string 解密得到的明文
      */
-    public function decrypt($ciphertext, $appid)
+    public function decrypt($ciphertext)
     {
-        try {
-            //使用BASE64对需要解密的字符串进行解码
-            $ciphertextDec = base64_decode($ciphertext);
-            $module = mcrypt_module_open(MCRYPT_RIJNDAEL_256, '', MCRYPT_MODE_CBC, '');
-            mcrypt_generic_init($module, $this->getKey(), $this->getIv());
-
-            //解密
-            $decrypted = mdecrypt_generic($module, $ciphertextDec);
-            mcrypt_generic_deinit($module);
-            mcrypt_module_close($module);
-        } catch (Exception $e) {
+//        try {
+//            //使用BASE64对需要解密的字符串进行解码
+//            $ciphertextDec = base64_decode($ciphertext);
+//            $module = mcrypt_module_open(MCRYPT_RIJNDAEL_256, '', MCRYPT_MODE_CBC, '');
+//            mcrypt_generic_init($module, $this->getKey(), $this->getIv());
+//
+//            //解密
+//            $decrypted = mdecrypt_generic($module, $ciphertextDec);
+//            mcrypt_generic_deinit($module);
+//            mcrypt_module_close($module);
+//        } catch (Exception $e) {
+//            return ResultUtil::returnRs(StatusCode::DECRYPT_AES_ERROR);
+//        }
+//
+//        $contentRs = '';
+//        try {
+//            //去除补位字符
+//            $result = PKCS7Encoder::decode($decrypted);
+//            //去除16位随机字符串,网络字节序和AppId
+//            if (strlen($result) < 16) {
+//                return ResultUtil::returnRs(StatusCode::SUCCESS, ['decrypt' => $contentRs]);
+//            }
+//            $content = substr($result, 16, strlen($result));
+//            $lenList = unpack("N", substr($content, 0, 4));
+//            $len = $lenList[1];
+//            $contentRs = substr($content, 4, $len);
+//        } catch (Exception $e) {
+//            return ResultUtil::returnRs(StatusCode::ILLEGAL_BUFFER);
+//        }
+//        
+//        return ResultUtil::returnRs(StatusCode::SUCCESS, ['decrypt' => $contentRs]);
+        
+        $plaintext = openssl_decrypt(base64_decode($ciphertext), 'AES-256-CBC', $this->getKey(), OPENSSL_RAW_DATA, $this->getIv());
+        if ($plaintext === false) {
             return ResultUtil::returnRs(StatusCode::DECRYPT_AES_ERROR);
         }
-
         $contentRs = '';
         try {
-            //去除补位字符
-            $result = PKCS7Encoder::decode($decrypted);
-            //去除16位随机字符串,网络字节序和AppId
-            if (strlen($result) < 16) {
+            //去除16位随机字符串,网络字节序
+            if (strlen($plaintext) < 16) {
                 return ResultUtil::returnRs(StatusCode::SUCCESS, ['decrypt' => $contentRs]);
             }
-            $content = substr($result, 16, strlen($result));
+            $content = substr($plaintext, 16, strlen($plaintext));
             $lenList = unpack("N", substr($content, 0, 4));
             $len = $lenList[1];
             $contentRs = substr($content, 4, $len);
-//            $contentAppId = substr($content, $len + 4);
         } catch (Exception $e) {
             return ResultUtil::returnRs(StatusCode::ILLEGAL_BUFFER);
         }
         
         return ResultUtil::returnRs(StatusCode::SUCCESS, ['decrypt' => $contentRs]);
-        
-//        $plaintext = openssl_decrypt($ciphertext, 'AES-256-CBC', $this->getKey(), OPENSSL_RAW_DATA, $this->getIv());
-//        if ($plaintext === false) {
-//            return ResultUtil::returnRs(StatusCode::DECRYPT_AES_ERROR);
-//        }
     }
     
     /**
