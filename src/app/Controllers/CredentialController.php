@@ -39,5 +39,19 @@ class CredentialController extends BaseController
                     StatusCode::REQUEST_FORBIDDEN['status']
                     );
         }
+        
+        $accessToken = md5(uniqid('YOKE', true));
+        $hashKey = $this->appAccount['app_id'] . ':' . $accessToken;
+        $result = yield $this->redis_pool->getCoroutine()->hMset(
+                $hashKey, 
+                $this->appAccount
+                );
+        
+        $retval = [
+            'accessToken' => $appSecret,
+            'expiredTimestamp' => time() + 30*86400
+        ];
+        
+        $this->sendApi(\Yoke\Util\ResultUtil::returnRs(StatusCode::SUCCESS, $retval));
     }
 }

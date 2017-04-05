@@ -96,6 +96,7 @@ class VerifyRequest
                     );
         }
         $this->checkRequestData($appAccount, $requestData);
+        $requestData = \Yoke\Util\ArrayUtil::mergeArray($transData, ['data' => $requestData]);
         ObjectUtil::instance()->setRequestData($requestData);
         
         return [

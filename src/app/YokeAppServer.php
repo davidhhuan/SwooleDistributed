@@ -1,4 +1,12 @@
 <?php
+/*
+ * PHP version 7.1+
+ *
+ * @copyright  No copyrights
+ * @link       http://www.cnblogs.com/davidhhuan
+ * @license    The MIT License (MIT) https://opensource.org/licenses/MIT
+ */
+
 namespace app;
 
 use Server\Asyn\HttpClient\HttpClientPool;
@@ -14,10 +22,12 @@ use app\Lib\Security\VerifyRequest;
 use Server\Coroutine\Coroutine;
 
 /**
- * Created by PhpStorm.
- * User: zhangjincheng
- * Date: 16-9-19
- * Time: 下午2:36
+ * 我是类描述信息哦！
+ *
+ * @author  birdylee <birdylee_cn@163.com>
+ * @since   2017年04月03日
+ * @version 1.0
+ *
  */
 class YokeAppServer extends AppServer
 {
@@ -26,56 +36,27 @@ class YokeAppServer extends AppServer
      * @param $request
      * @param $response
      */
-    public function onSwooleRequest(Request $request, Response $response)
+    public function onSwooleRequest($request, $response)
     {
-        $error404 = false;
-        $controllerInstance = null;
         $this->route->handleClientRequest($request);
         list($host) = explode(':', $request->header['host']??'');
         //接口请求
         if ($this->route->getPath() == '/') {
             return $this->handleApiRequest($request, $response);
         } else {
-            $controllerName = $this->route->getControllerName();
-            $controllerInstance = ControllerFactory::getInstance()->getController($controllerName);
-            if ($controllerInstance != null) {
-                if($this->route->getMethodName()=='_consul_health'){//健康检查
-                    $response->end('ok');
-                    $controllerInstance->destroy();
-                    return;
-                }
-                $methodName = $this->config->get('http.method_prefix', '') . $this->route->getMethodName();
-                if (!method_exists($controllerInstance, $methodName)) {
-                    $methodName = 'defaultMethod';
-                }
-                try {
-                    $controllerInstance->setRequestResponse($request, $response, $controllerName, $methodName);
-                    Coroutine::startCoroutine([$controllerInstance, $methodName], $this->route->getParams());
-                    return;
-                } catch (\Exception $e) {
-                    call_user_func([$controllerInstance, 'onExceptionHandle'], $e);
-                }
-            } else {
-                $error404 = true;
-            }
+            return parent::onSwooleRequest($request, $response);
         }
-        
-        if ($error404) {
-            if ($controllerInstance != null) {
-                $controllerInstance->destroy();
-            }
-            //先根据path找下www目录
-            $wwwPath = $this->getHostRoot($host) . $this->route->getPath();
-            $result = httpEndFile($wwwPath, $request, $response);
-            if (!$result) {
-                $response->header('HTTP/1.1', '404 Not Found');
-                if (!isset($this->cache404)) {//内存缓存404页面
-                    $template = $this->loader->view('server::error_404');
-                    $this->cache404 = $template->render();
-                }
-                $response->end($this->cache404);
-            }
-        }
+    }
+    
+    /**
+     * websocket合并后完整的消息
+     * @param $serv
+     * @param $fd
+     * @param $data
+     */
+    public function onSwooleWSAllMessage($serv, $fd, $data)
+    {
+        parent::onSwooleWSAllMessage($serv, $fd, $data);
     }
     
     /**
@@ -91,10 +72,10 @@ class YokeAppServer extends AppServer
         try {
             $verifyRequest = new VerifyRequest();
             list($appAccount, $requestData) = $verifyRequest->handleClientRequest($request);
-            $controllerName = $requestData['serviceName'];
+            $controllerName = $requestData['data']['serviceName'];
             $controllerInstance = ControllerFactory::getInstance()->getController($controllerName);
             if ($controllerInstance != NULL) {
-                $methodName = $requestData['methodName'] . 'Action';
+                $methodName = $requestData['data']['methodName'] . 'Action';
                 if (!method_exists($controllerInstance, $methodName)) {
                     throw new LogicException(
                     StatusCode::REQUEST_NOT_FOUND['info'], StatusCode::REQUEST_NOT_FOUND['status']
@@ -102,7 +83,7 @@ class YokeAppServer extends AppServer
                 }
 
                 $controllerInstance->setRequestResponse($request, $response, $controllerName, $methodName);
-                Coroutine::startCoroutine([$controllerInstance, $methodName], $requestData['args']);
+                Coroutine::startCoroutine([$controllerInstance, $methodName], $requestData['data']['args']);
             } else {
                 throw new LogicException(
                 StatusCode::REQUEST_NOT_FOUND['info'], StatusCode::REQUEST_NOT_FOUND['status']
@@ -110,8 +91,7 @@ class YokeAppServer extends AppServer
             }
         } catch (\Exception $e) {
             $responseRs = ResultUtil::returnRs(['status' => $e->getCode(), 'info' => $e->getMessage()]);
+            $response->end(JsonUtil::encode($responseRs));
         }
-
-        $response->end(JsonUtil::encode($responseRs));
     }
 }

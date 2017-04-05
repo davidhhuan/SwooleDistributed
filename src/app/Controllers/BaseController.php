@@ -10,6 +10,11 @@
 namespace app\Controllers;
 
 use Server\CoreBase\Controller;
+use Yoke\Util\ResultUtil;
+use Yoke\Util\JsonUtil;
+use Yoke\Exception\StatusCode;
+use Yoke\Security\DataCrypt;
+use Yoke\Util\ArrayUtil;
 
 /**
  * 我是类描述信息哦！
@@ -51,6 +56,42 @@ class BaseController extends Controller
         parent::destroy();
         $this->appAccount = null;
         $this->requestData = null;
+    }
+    
+    /**
+     * 发送回API
+     * 
+     * @param array $rs Yoke\Util\ResultUtil::returnRs
+     */
+    public function sendApi($resultUtil)
+    {
+        if ($resultUtil['status'] == StatusCode::SUCCESS['status']) {
+            $resultUtil['retval'] = ArrayUtil::mergeArray(
+                    $resultUtil['retval'], 
+                    [
+                        'callback' => $this->requestData['callback'], 
+                    ]
+                    );
+            $dataCrypt = new DataCrypt(
+                    $this->appAccount['app_id'], 
+                    $this->requestData['token'], 
+                    $this->appAccount['encoding_aes_key']
+                    );
+            $resultUtil = $dataCrypt->encrypt(
+                    $resultUtil['retval'], 
+                    $this->requestData['nonce'], 
+                    $this->requestData['timestamp']
+                    );
+        }
+        
+        $rs = JsonUtil::encode([$resultUtil['status'], $resultUtil['info'], $resultUtil['retval']]);
+        //http请求
+        if (empty($this->fd)) {
+            $this->http_output->setContentType('application/json');
+            $this->http_output->end($rs);
+        } else {
+            $this->send($rs);
+        }
     }
 
 }
