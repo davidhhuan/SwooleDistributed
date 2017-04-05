@@ -69,7 +69,7 @@ class BaseController extends Controller
             $resultUtil['retval'] = ArrayUtil::mergeArray(
                     $resultUtil['retval'], 
                     [
-                        'callback' => $this->requestData['callback'], 
+                        'callback' => $this->requestData['data']['callback'], 
                     ]
                     );
             $dataCrypt = new DataCrypt(
@@ -77,13 +77,17 @@ class BaseController extends Controller
                     $this->requestData['token'], 
                     $this->appAccount['encoding_aes_key']
                     );
-            $resultUtil = $dataCrypt->encrypt(
+            $resultUtilEnc = $dataCrypt->encrypt(
                     $resultUtil['retval'], 
                     $this->requestData['nonce'], 
                     $this->requestData['timestamp']
                     );
+            if (\Yoke\Util\DevUtil::isDebug()) {
+                $resultUtilEnc['retval']['debug'] = $resultUtil['retval'];
+            }
+            $resultUtil = $resultUtilEnc;
         }
-        
+        $resultUtil = ArrayUtil::toString($resultUtil);
         $rs = JsonUtil::encode([$resultUtil['status'], $resultUtil['info'], $resultUtil['retval']]);
         //http请求
         if (empty($this->fd)) {

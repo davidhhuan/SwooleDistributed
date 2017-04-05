@@ -79,7 +79,7 @@ class Prpcrypt
         if ($ciphertext === false) {
             return ResultUtil::returnRs(StatusCode::ENCRYPT_AES_ERROR);
         } else {
-            return ResultUtil::returnRs(StatusCode::SUCCESS, ['encrypt' => base64_encode($ciphertext)]);
+            return ResultUtil::returnRs(StatusCode::SUCCESS, ['encrypt' => base64_encode(base64_encode($ciphertext))]);
         }
         
     }
@@ -123,7 +123,7 @@ class Prpcrypt
 //        
 //        return ResultUtil::returnRs(StatusCode::SUCCESS, ['decrypt' => $contentRs]);
         
-        $plaintext = openssl_decrypt(base64_decode($ciphertext), 'AES-256-CBC', $this->getKey(), OPENSSL_RAW_DATA, $this->getIv());
+        $plaintext = openssl_decrypt(base64_decode(base64_decode($ciphertext)), 'AES-256-CBC', $this->getKey(), OPENSSL_RAW_DATA, $this->getIv());
         if ($plaintext === false) {
             return ResultUtil::returnRs(StatusCode::DECRYPT_AES_ERROR);
         }

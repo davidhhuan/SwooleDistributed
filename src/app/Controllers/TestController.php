@@ -10,11 +10,11 @@
 namespace app\Controllers;
 
 use Server\Components\Consul\ConsulServices;
-use Server\CoreBase\Controller;
 use Server\CoreBase\SelectCoroutine;
 use Server\Memory\Lock;
 use Yoke\Security\DataCrypt;
 use app\Models\AppAccountModel;
+use Server\CoreBase\Controller;
 
 /**
  * 
@@ -22,14 +22,12 @@ use app\Models\AppAccountModel;
  * @since   2017年04月02日
  * @version 1.0
  */
-class TestController extends BaseController
+class TestController extends Controller
 {
     public function http_testContent()
     {
-        $appAccount = AppAccountModel::getAccountInfo('yoke!sdcvMa950dK3La$3vcVgaUiadKb');
-        
-        print_r($appAccount);
-        die();
+//        $appAccount = AppAccountModel::getAccountInfo('yoke!sdcvMa950dK3La$3vcVgaUiadKb');
+//        \Yoke\Util\DevUtil::dump($appAccount);
         
         $encodingAesKey = "Xv12#20LogpAftmMfgtrad_-RFasdfvcXLHMtUiOdv>vZzAdfv*5bn)hgbCVdGtB";
         $appSecret = '!wedFxZPpi(6$Xbm>fd123*5FgHjvmBc';
@@ -55,7 +53,7 @@ class TestController extends BaseController
         $dataCrypt = new DataCrypt($appId, $token, $encodingAesKey);
         
         $rsEncrypt = $dataCrypt->encrypt($data, $nonce, $timestamp);
-        print_r($rsEncrypt);
+        \Yoke\Util\DevUtil::dump($rsEncrypt, false);
         
         $dataMock = [
             'transmission' => [
@@ -78,8 +76,7 @@ class TestController extends BaseController
             'timestamp' => $rsEncrypt['retval']['timestamp'], //接口，获取服务器时间
             'signature' => $rsEncrypt['retval']['signature'], //签名。sha1(sort([$data, $token, $nonce, $timestamp], SORT_STRING));
         ];
-        
-        print_r(json_encode($dataMock));
+        \Yoke\Util\DevUtil::dump(json_encode($dataMock), false);
         
         $rsDecrypt = $dataCrypt->decrypt(
                 $rsEncrypt['retval']['data'], 
@@ -87,7 +84,7 @@ class TestController extends BaseController
                 $timestamp, 
                 $rsEncrypt['retval']['signature']
         );
-        print_r($rsDecrypt);
+        \Yoke\Util\DevUtil::dump($rsDecrypt, false);
         
         $this->http_output->end('a');
     }

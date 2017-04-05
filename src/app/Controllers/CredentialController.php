@@ -40,17 +40,8 @@ class CredentialController extends BaseController
                     );
         }
         
-        $accessToken = md5(uniqid('YOKE', true));
-        $hashKey = $this->appAccount['app_id'] . ':' . $accessToken;
-        $result = yield $this->redis_pool->getCoroutine()->hMset(
-                $hashKey, 
-                $this->appAccount
-                );
-        
-        $retval = [
-            'accessToken' => $appSecret,
-            'expiredTimestamp' => time() + 30*86400
-        ];
+        $appAccountModel = $this->loader->model('AppAccountModel', $this);
+        $retval = yield $appAccountModel->getAccessToken();
         
         $this->sendApi(\Yoke\Util\ResultUtil::returnRs(StatusCode::SUCCESS, $retval));
     }

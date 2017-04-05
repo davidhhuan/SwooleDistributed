@@ -9,6 +9,8 @@
  */
 namespace app\Controllers;
 
+use Server\CoreBase\Controller;
+
 /**
  * 我是类描述信息哦！
  *
@@ -17,7 +19,7 @@ namespace app\Controllers;
  * @version 1.0
  *
  */
-class CommonController extends BaseController
+class CommonController extends Controller
 {
     /**
      * 时间戳
@@ -26,7 +28,7 @@ class CommonController extends BaseController
      */
     public function http_timestamp()
     {
-        return time();
+        $this->http_output->end(time());
     }
 
 }

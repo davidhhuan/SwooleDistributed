@@ -44,5 +44,30 @@ class ArrayUtil
         }
         return $res;
     }
+    
+    /**
+     * 数组键值转换字符串
+     * 
+     * @param type $data
+     * @return \stdClass
+     */
+    public static function toString($data)
+    {
+        if (empty($data) && !is_object($data)) {
+            return new \stdClass();
+        }
+        if (is_array($data)) {
+            foreach ($data as $key => $val) {
+                if (is_array($val)) {
+                    $data[$key] = self::toString($val);
+                } else {
+                    !is_bool($val) && !is_object($data) && $data[$key] = (string) $val;
+                }
+            }
+        } else if (!is_bool($data) && !is_object($data)) {
+            $data = (string) $data;
+        }
+        return $data;
+    }
 
 }

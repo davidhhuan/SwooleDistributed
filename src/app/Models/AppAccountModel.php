@@ -58,15 +58,35 @@ class AppAccountModel extends BaseModel
      * 
      * @param type $token
      */
-    public static function getAccountInfoViaToken($token)
+    public static function getAccountInfoViaToken($hashKey)
     {
         $info = false;
-        $result = get_instance()->redis_pool->getSync()->hMget($token);
+        $result = get_instance()->redis_pool->getSync()->hGetAll($hashKey);
         if (is_array($result)) {
             $info = $result;
         }
         
         return $info;
+    }
+    
+    /**
+     * 
+     */
+    public function getAccessToken()
+    {
+        $accessToken = md5(uniqid('YOKE', true));
+        $expired = 30*86400;
+        $hashKey = $accessToken;
+        yield $this->redis_pool->getCoroutine()->hMset(
+                $hashKey, 
+                $this->appAccount
+                );
+        yield $this->redis_pool->getCoroutine()->expire($hashKey, $expired);
+        
+        return [
+            'accessToken' => $accessToken,
+            'expiredTimestamp' => time() + $expired
+        ];
     }
     
 
