@@ -11,7 +11,7 @@ namespace app\Models;
 
 use Server\CoreBase\Model;
 
-class AppModel extends Model
+class AppModel extends BaseModel
 {
     public function test()
     {

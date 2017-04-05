@@ -70,7 +70,7 @@ class DataCrypt
      */
     private function checkData($appId, $token, $encodingAesKey)
     {
-        if (strlen($encodingAesKey) != 43) {
+        if (strlen($encodingAesKey) != 64) {
 			throw new SystemException(StatusCode::ILLEGAL_AES_KEY['info'], StatusCode::ILLEGAL_AES_KEY['status']);
 		}
     }
