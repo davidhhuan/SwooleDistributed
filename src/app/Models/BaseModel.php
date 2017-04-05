@@ -21,6 +21,9 @@ use Server\CoreBase\Model;
  */
 class BaseModel extends Model
 {
+    protected $appAccount;
+    
+    protected $requestData;
 
     const DATA_TABLE_PREFIX = 'yokem_';
     
@@ -32,6 +35,16 @@ class BaseModel extends Model
     public static function getTableName()
     {
         return null;
+    }
+    
+    /**
+     * 当被loader时会调用这个方法进行初始化
+     */
+    public function initialization(&$context)
+    {
+        parent::initialization($context);
+        $this->appAccount = \app\Lib\Util\ObjectUtil::instance()->getAppAccount();
+        $this->requestData = \app\Lib\Util\ObjectUtil::instance()->getRequestData();
     }
 
 }

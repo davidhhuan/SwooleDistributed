@@ -88,7 +88,7 @@ class BaseController extends Controller
             $resultUtil = $resultUtilEnc;
         }
         $resultUtil = ArrayUtil::toString($resultUtil);
-        $rs = JsonUtil::encode([$resultUtil['status'], $resultUtil['info'], $resultUtil['retval']]);
+        $rs = JsonUtil::encode($resultUtil);
         //http请求
         if (empty($this->fd)) {
             $this->http_output->setContentType('application/json');

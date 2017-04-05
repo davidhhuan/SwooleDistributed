@@ -15,6 +15,7 @@ use Server\Memory\Lock;
 use Yoke\Security\DataCrypt;
 use app\Models\AppAccountModel;
 use Server\CoreBase\Controller;
+use Swoole\Http\Client as SwooleHttpClient;
 
 /**
  * 
@@ -26,14 +27,14 @@ class TestController extends Controller
 {
     public function http_testContent()
     {
-//        $appAccount = AppAccountModel::getAccountInfo('yoke!sdcvMa950dK3La$3vcVgaUiadKb');
+        $appAccount = AppAccountModel::getAccountInfo('yoke!sdcvMa950dK3La$3vcVgaUiadKb');
 //        \Yoke\Util\DevUtil::dump($appAccount);
         
-        $encodingAesKey = "Xv12#20LogpAftmMfgtrad_-RFasdfvcXLHMtUiOdv>vZzAdfv*5bn)hgbCVdGtB";
-        $appSecret = '!wedFxZPpi(6$Xbm>fd123*5FgHjvmBc';
-        $timestamp = "1409304348";
-        $nonce = "xxxxxx";
-        $appId = "yoke!sdcvMa950dK3La$3vcVgaUiadKb";
+        $appId = $appAccount['app_id'];
+        $appSecret = $appAccount['app_secret'];
+        $encodingAesKey = $appAccount['encoding_aes_key'];
+        $timestamp = time();
+        $nonce = \Yoke\Util\StringUtil::getRandomStr(6);
         $token = $appId;
         
         $data = [
@@ -53,8 +54,6 @@ class TestController extends Controller
         $dataCrypt = new DataCrypt($appId, $token, $encodingAesKey);
         
         $rsEncrypt = $dataCrypt->encrypt($data, $nonce, $timestamp);
-        \Yoke\Util\DevUtil::dump($rsEncrypt, false);
-        
         $dataMock = [
             'transmission' => [
                 'mode' => 'security', //传输方式，固定值
@@ -76,15 +75,84 @@ class TestController extends Controller
             'timestamp' => $rsEncrypt['retval']['timestamp'], //接口，获取服务器时间
             'signature' => $rsEncrypt['retval']['signature'], //签名。sha1(sort([$data, $token, $nonce, $timestamp], SORT_STRING));
         ];
-        \Yoke\Util\DevUtil::dump(json_encode($dataMock), false);
+//        \Yoke\Util\DevUtil::dump(json_encode($dataMock), false);
         
-        $rsDecrypt = $dataCrypt->decrypt(
-                $rsEncrypt['retval']['data'], 
-                $nonce, 
-                $timestamp, 
-                $rsEncrypt['retval']['signature']
-        );
-        \Yoke\Util\DevUtil::dump($rsDecrypt, false);
+        $cli = new SwooleHttpClient('127.0.0.1', 8081); 
+        $cli->post('/', ['data' => json_encode($dataMock)], function ($cli) use (
+                $appId, $nonce, $token, $encodingAesKey, $timestamp) {
+//            echo $cli->body;
+            $body = $cli->body;
+            $responseBody = \Yoke\Util\JsonUtil::decode($body);
+            if ($responseBody['status'] == \Yoke\Exception\StatusCode::SUCCESS['status']) {
+                $retval = $responseBody['retval'];
+                $dataCrypt = new DataCrypt($appId, $token, $encodingAesKey);
+                $rsDecrypt = $dataCrypt->decrypt(
+                        $retval['data'], 
+                        $retval['nonce'], 
+                        $retval['timestamp'], 
+                        $retval['signature']
+                );
+//                \Yoke\Util\DevUtil::dump($rsDecrypt);
+                
+                if ($rsDecrypt['status'] == \Yoke\Exception\StatusCode::SUCCESS['status']) {
+                    $retvalDecrypt = $rsDecrypt['retval'];
+                    $responseData = \Yoke\Util\JsonUtil::decode($retvalDecrypt['data']);
+                    
+                    //发出接口请求
+                    $data = [
+                        'system' => 'mall', // 系统。目前固定为 mall
+                        'serviceName' => 'CredentialController', 
+                        'methodName' => 'testApi', 
+                        'args' => [
+                            
+                        ], 
+                        'callback' => [ //原样返回的数据，这里作为保留字段
+
+                        ],
+                        'watermark' => [//水印，用于校验。目前只校验appId
+                            'appId' => $appId, 
+                        ], 
+                    ];
+                    $dataCrypt = new DataCrypt($appId, $responseData['accessToken'], $encodingAesKey);
+
+                    $rsEncrypt = $dataCrypt->encrypt($data, $nonce, $timestamp);
+                    $dataMock = [
+                        'transmission' => [
+                            'mode' => 'security', //传输方式，固定值
+                            'version' => '1.0', //传输版本
+                            'client' => [
+                                'platform' => 'android', //客户端。ios|android|wap|pc，全小写
+                                'info' => [
+                                    //APP(iOS|Android)
+                                    'dNumber' => '111111', //设备号
+                                    'dBrand' => 'meizu', //设备品牌。暂时为空
+                                    'dOsVersion' => '6.0', //设备操作系统版本
+                                ],
+                            ],
+                        ], 
+                        'operation' => 'api', //操作。accessToken代表该请求是取accessToken
+                        'data' => $rsEncrypt['retval']['data'], //加密后的数据
+                        'token' => $responseData['accessToken'], //这里是appID
+                        'nonce' => $rsEncrypt['retval']['nonce'], //6位随机数
+                        'timestamp' => $rsEncrypt['retval']['timestamp'], //接口，获取服务器时间
+                        'signature' => $rsEncrypt['retval']['signature'], //签名。sha1(sort([$data, $token, $nonce, $timestamp], SORT_STRING));
+                    ];
+                    
+                    $cliApi = new SwooleHttpClient('127.0.0.1', 8081); 
+                    $cliApi->post('/', ['data' => json_encode($dataMock)], function ($cliApi) use ($appId) {
+                        echo $cliApi->body;
+                    });
+                }
+            }
+        });
+
+//        $rsDecrypt = $dataCrypt->decrypt(
+//                $rsEncrypt['retval']['data'], 
+//                $nonce, 
+//                $timestamp, 
+//                $rsEncrypt['retval']['signature']
+//        );
+//        \Yoke\Util\DevUtil::dump($rsDecrypt, false);
         
         $this->http_output->end('a');
     }

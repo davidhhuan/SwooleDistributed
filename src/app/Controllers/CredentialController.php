@@ -45,4 +45,12 @@ class CredentialController extends BaseController
         
         $this->sendApi(\Yoke\Util\ResultUtil::returnRs(StatusCode::SUCCESS, $retval));
     }
+    
+    /**
+     * 测试API请求
+     */
+    public function testApiAction()
+    {
+        $this->sendApi(\Yoke\Util\ResultUtil::returnRs(StatusCode::SUCCESS, ['test' => 'ok']));
+    }
 }
