@@ -13,6 +13,8 @@ use Yoke\Exception\LogicException;
 use Yoke\Exception\StatusCode;
 use Yoke\Util\JsonUtil;
 use app\Models\AppAccountModel;
+use app\Lib\Util\ObjectUtil;
+use Yoke\Security\DataCrypt;
 
 
 class SecurityRoute implements IRoute
@@ -56,10 +58,10 @@ class SecurityRoute implements IRoute
         $appAccount = [];
         switch ($transData['operation']) {
             case 'accessToken': 
-                $appAccount = yield AppAccountModel::getAccountInfo($transData['token']);
+                $appAccount = AppAccountModel::getAccountInfo($transData['token']);
                 break;
             case 'api':
-                $appAccount = yield AppAccountModel::getAccountInfoViaToken($transData['token']);
+                $appAccount = AppAccountModel::getAccountInfoViaToken($transData['token']);
                 break;
             default:
                 throw new LogicException(StatusCode::BAD_REQUEST['info'], StatusCode::BAD_REQUEST['status']);
@@ -68,14 +70,32 @@ class SecurityRoute implements IRoute
         if (empty($appAccount)) {
             throw new LogicException(StatusCode::REQUEST_FORBIDDEN['status'], StatusCode::REQUEST_FORBIDDEN['info']);
         }
+        ObjectUtil::instance()->setAppAccount($appAccount);
         
-        print_r($transData);
-        die();
+        $dataCrypt = new DataCrypt($appAccount['app_id'], $transData['token'], $appAccount['encoding_aes_key']);
+        $rsDecrypt = $dataCrypt->decrypt(
+                $transData['data'], 
+                $transData['nonce'], 
+                $transData['timestamp'], 
+                $transData['signature']
+        );
+        if (!isset($rsDecrypt['status'])) {
+            throw new LogicException(StatusCode::SERVER_ERROR['status'], StatusCode::SERVER_ERROR['info']);
+        }
+        if ($rsDecrypt['status'] != StatusCode::SUCCESS['status']) {
+            throw new LogicException($rsDecrypt['status'], $rsDecrypt['info']);
+        }
+        $requestData = JsonUtil::decode($rsDecrypt['retval']['data']);
+        if (empty($requestData)) {
+            throw new LogicException(StatusCode::REQUEST_FORBIDDEN['status'], StatusCode::REQUEST_FORBIDDEN['info']);
+        }
+        $this->checkRequestData($appAccount, $requestData);
+        ObjectUtil::instance()->setRequestData($requestData);
         
         $this->clientData->path = $request->server['path_info'];
         $route = explode('/', $request->server['path_info']);
-        $this->clientData->controller_name = $route[1]??null;
-        $this->clientData->method_name = $route[2]??null;
+        $this->clientData->controllerName = $requestData['serviceName']??null;
+        $this->clientData->methodName = $requestData['methodName']??null;
     }
 
     /**
@@ -84,7 +104,7 @@ class SecurityRoute implements IRoute
      */
     public function getControllerName()
     {
-        return $this->clientData->controller_name;
+        return $this->clientData->controllerName;
     }
 
     /**
@@ -93,7 +113,7 @@ class SecurityRoute implements IRoute
      */
     public function getMethodName()
     {
-        return $this->clientData->method_name;
+        return $this->clientData->methodName;
     }
 
     public function getPath()
@@ -104,5 +124,26 @@ class SecurityRoute implements IRoute
     public function getParams()
     {
         return $this->clientData->params??null;
+    }
+    
+    /**
+     * @param array $appAccount
+     * @param array $requestData
+     */
+    private function checkRequestData($appAccount, $requestData)
+    {
+        if (!isset($requestData['watermark']) || !isset($requestData['watermark']['appId'])) {
+            throw new LogicException(
+                    StatusCode::REQUEST_FORBIDDEN['status'], 
+                    StatusCode::REQUEST_FORBIDDEN['info']
+                    );
+        }
+        
+        if ($appAccount['app_id'] != $requestData['watermark']['appId']) {
+            throw new LogicException(
+                    StatusCode::REQUEST_FORBIDDEN['status'], 
+                    StatusCode::REQUEST_FORBIDDEN['info']
+                    );
+        }
     }
 }

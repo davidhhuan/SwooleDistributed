@@ -22,11 +22,11 @@ use app\Models\AppAccountModel;
  * @since   2017年04月02日
  * @version 1.0
  */
-class TestController extends Controller
+class TestController extends BaseController
 {
     public function http_testContent()
     {
-        $appAccount = yield AppAccountModel::getAccountInfo('yoke!sdcvMa950dK3La$3vcVgaUiadKb');
+        $appAccount = AppAccountModel::getAccountInfo('yoke!sdcvMa950dK3La$3vcVgaUiadKb');
         
         print_r($appAccount);
         die();

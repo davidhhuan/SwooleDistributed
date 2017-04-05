@@ -21,7 +21,36 @@ use Server\CoreBase\Controller;
  */
 class BaseController extends Controller
 {
-
+    protected $appAccount;
     
+    protected $requestData;
+    
+    /**
+     * 
+     * @param string $controllerName
+     * @param string $methodName
+     */
+    protected function initialization($controllerName, $methodName)
+    {
+        parent::initialization($controllerName, $methodName);
+        
+        $this->appAccount = \app\Lib\Util\ObjectUtil::instance()->getAppAccount();
+        $this->requestData = \app\Lib\Util\ObjectUtil::instance()->getRequestData();
+        if (empty($this->appAccount) || empty($this->requestData)) {
+            throw new \Yoke\Exception\LogicException(
+            \Yoke\Exception\StatusCode::BAD_REQUEST['info'], \Yoke\Exception\StatusCode::BAD_REQUEST['status']
+            );
+        }
+    }
+    
+    /**
+     * 销毁
+     */
+    public function destroy()
+    {
+        parent::destroy();
+        $this->appAccount = null;
+        $this->requestData = null;
+    }
 
 }

@@ -38,15 +38,19 @@ class AppAccountModel extends BaseModel
      */
     public static function getAccountInfo($appId = null)
     {
-        $miner = get_instance()->mysql_pool->dbQueryBuilder
+        $miner = get_instance()->mysql_pool->getSync()
                     ->select('*')
                     ->from(static::getTableName());
         if (!is_null($appId)) {
             $miner = $miner->where('app_id', $appId);
         }
-        $result = yield $miner->coroutineSend();
+        $result = $miner->pdoQuery();
+        $info = false;
+        if (isset($result['result']) && is_array($result['result']) && count($result['result'])) {
+            $info = current($result['result']);
+        }
         
-        return $result;
+        return $info;
     }
     
     /**
@@ -56,7 +60,13 @@ class AppAccountModel extends BaseModel
      */
     public static function getAccountInfoViaToken($token)
     {
-        return yield get_instance()->redis_pool->getCoroutine()->hMget($token);
+        $info = false;
+        $result = get_instance()->redis_pool->getSync()->hMget($token);
+        if (is_array($result)) {
+            $info = $result;
+        }
+        
+        return $info;
     }
     
 
