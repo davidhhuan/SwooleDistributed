@@ -7,7 +7,7 @@
  * @link       http://www.cnblogs.com/davidhhuan
  * @license    The MIT License (MIT) https://opensource.org/licenses/MIT
  */
-namespace Yoke\Util;
+namespace Fayho\Util;
 
 /**
  * Copy from Yii

@@ -12,7 +12,7 @@ namespace app\Controllers;
 use Server\Components\Consul\ConsulServices;
 use Server\CoreBase\SelectCoroutine;
 use Server\Memory\Lock;
-use Yoke\Security\DataCrypt;
+use Fayho\Security\DataCrypt;
 use app\Models\AppAccountModel;
 use Server\CoreBase\Controller;
 use Swoole\Http\Client as SwooleHttpClient;
@@ -27,14 +27,14 @@ class TestController extends Controller
 {
     public function http_testContent()
     {
-        $appAccount = AppAccountModel::getAccountInfo('yoke!sdcvMa950dK3La$3vcVgaUiadKb');
-//        \Yoke\Util\DevUtil::dump($appAccount);
+        $appAccount = AppAccountModel::getAccountInfo('fayho!sdcvMa950dK3La$3vcVgaUiadKb');
+//        \Fayho\Util\DevUtil::dump($appAccount);
         
         $appId = $appAccount['app_id'];
         $appSecret = $appAccount['app_secret'];
         $encodingAesKey = $appAccount['encoding_aes_key'];
         $timestamp = time();
-        $nonce = \Yoke\Util\StringUtil::getRandomStr(6);
+        $nonce = \Fayho\Util\StringUtil::getRandomStr(6);
         $token = $appId;
         
         $data = [
@@ -75,15 +75,15 @@ class TestController extends Controller
             'timestamp' => $rsEncrypt['retval']['timestamp'], //接口，获取服务器时间
             'signature' => $rsEncrypt['retval']['signature'], //签名。sha1(sort([$data, $token, $nonce, $timestamp], SORT_STRING));
         ];
-//        \Yoke\Util\DevUtil::dump(json_encode($dataMock), false);
+//        \Fayho\Util\DevUtil::dump(json_encode($dataMock), false);
         
         $cli = new SwooleHttpClient('127.0.0.1', 8081); 
         $cli->post('/', ['data' => json_encode($dataMock)], function ($cli) use (
                 $appId, $nonce, $token, $encodingAesKey, $timestamp) {
 //            echo $cli->body;
             $body = $cli->body;
-            $responseBody = \Yoke\Util\JsonUtil::decode($body);
-            if ($responseBody['status'] == \Yoke\Exception\StatusCode::SUCCESS['status']) {
+            $responseBody = \Fayho\Util\JsonUtil::decode($body);
+            if ($responseBody['status'] == \Fayho\Exception\StatusCode::SUCCESS['status']) {
                 $retval = $responseBody['retval'];
                 $dataCrypt = new DataCrypt($appId, $token, $encodingAesKey);
                 $rsDecrypt = $dataCrypt->decrypt(
@@ -92,11 +92,11 @@ class TestController extends Controller
                         $retval['timestamp'], 
                         $retval['signature']
                 );
-//                \Yoke\Util\DevUtil::dump($rsDecrypt);
+//                \Fayho\Util\DevUtil::dump($rsDecrypt);
                 
-                if ($rsDecrypt['status'] == \Yoke\Exception\StatusCode::SUCCESS['status']) {
+                if ($rsDecrypt['status'] == \Fayho\Exception\StatusCode::SUCCESS['status']) {
                     $retvalDecrypt = $rsDecrypt['retval'];
-                    $responseData = \Yoke\Util\JsonUtil::decode($retvalDecrypt['data']);
+                    $responseData = \Fayho\Util\JsonUtil::decode($retvalDecrypt['data']);
                     
                     //发出接口请求
                     $data = [
@@ -152,7 +152,7 @@ class TestController extends Controller
 //                $timestamp, 
 //                $rsEncrypt['retval']['signature']
 //        );
-//        \Yoke\Util\DevUtil::dump($rsDecrypt, false);
+//        \Fayho\Util\DevUtil::dump($rsDecrypt, false);
         
         $this->http_output->end('a');
     }

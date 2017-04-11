@@ -13,7 +13,7 @@
       "Server\\": "src/Server",
       "app\\": "src/app",
       "test\\": "src/test", 
-      "Yoke\\": "src/Yoke"
+      "Fayho\\": "src/Fayho"
     },
     "files": [
       "src/Server/helpers/Common.php"

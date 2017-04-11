@@ -7,10 +7,10 @@
  * @link       http://www.cnblogs.com/davidhhuan
  * @license    The MIT License (MIT) https://opensource.org/licenses/MIT
  */
-namespace Yoke\Security;
+namespace Fayho\Security;
 
-use Yoke\Util\ResultUtil;
-use Yoke\Exception\StatusCode;
+use Fayho\Util\ResultUtil;
+use Fayho\Exception\StatusCode;
 
 /**
  * 我是类描述信息哦！

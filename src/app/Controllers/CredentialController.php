@@ -13,10 +13,10 @@ use Server\Components\Consul\ConsulServices;
 use Server\CoreBase\Controller;
 use Server\CoreBase\SelectCoroutine;
 use Server\Memory\Lock;
-use Yoke\Security\DataCrypt;
+use Fayho\Security\DataCrypt;
 use app\Models\AppAccountModel;
-use Yoke\Exception\LogicException;
-use Yoke\Exception\StatusCode;
+use Fayho\Exception\LogicException;
+use Fayho\Exception\StatusCode;
 
 /**
  * 
@@ -43,7 +43,7 @@ class CredentialController extends BaseController
         $appAccountModel = $this->loader->model('AppAccountModel', $this);
         $retval = yield $appAccountModel->getAccessToken();
         
-        $this->sendApi(\Yoke\Util\ResultUtil::returnRs(StatusCode::SUCCESS, $retval));
+        $this->sendApi(\Fayho\Util\ResultUtil::returnRs(StatusCode::SUCCESS, $retval));
     }
     
     /**
@@ -51,6 +51,6 @@ class CredentialController extends BaseController
      */
     public function testApiAction()
     {
-        $this->sendApi(\Yoke\Util\ResultUtil::returnRs(StatusCode::SUCCESS, ['test' => 'ok']));
+        $this->sendApi(\Fayho\Util\ResultUtil::returnRs(StatusCode::SUCCESS, ['test' => 'ok']));
     }
 }

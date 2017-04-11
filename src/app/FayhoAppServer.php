@@ -11,11 +11,11 @@ namespace app;
 
 use Server\Asyn\HttpClient\HttpClientPool;
 use Server\SwooleDistributedServer;
-use Yoke\Util\ResultUtil;
-use Yoke\Util\JsonUtil;
+use Fayho\Util\ResultUtil;
+use Fayho\Util\JsonUtil;
 use Server\CoreBase\ControllerFactory;
-use Yoke\Exception\LogicException;
-use Yoke\Exception\StatusCode;
+use Fayho\Exception\LogicException;
+use Fayho\Exception\StatusCode;
 use Swoole\Http\Request;
 use Swoole\Http\Response;
 use app\Lib\Security\VerifyRequest;
@@ -29,7 +29,7 @@ use Server\Coroutine\Coroutine;
  * @version 1.0
  *
  */
-class YokeAppServer extends AppServer
+class FayhoAppServer extends AppServer
 {
     /**
      * http服务器发来消息

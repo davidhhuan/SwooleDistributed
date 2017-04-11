@@ -7,30 +7,32 @@
  * @link       http://www.cnblogs.com/davidhhuan
  * @license    The MIT License (MIT) https://opensource.org/licenses/MIT
  */
-namespace Yoke\Exception;
+namespace Fayho\Exception;
 
-use Yoke\Exception\StatusCode;
 /**
- * 只能在系统运行时才能发现错误抛出的异常
+ * 逻辑异常
+ *
+ * 程序中的逻辑错误产生的异常
  *
  * @author  birdylee <birdylee_cn@163.com>
- * @since   2017年04月02日
+ * @since   2017年04月03日
  * @version 1.0
- * @link http://php.net/manual/zh/class.runtimeexception.php 
  *
  */
-class SystemException extends \RuntimeException
+class LogicException extends \LogicException
 {
 
     /**
      * 构造方法
-     *
+     * 
      * @param string     $message
      * @param int        $code
-     * @param \Exception $previous
+     * @param mixed      $args
+     * @param \Throwable $previous
      */
-    public function __construct($message, $code = StatusCode::SERVER_ERROR['status'], \Throwable $previous = null)
+    public function __construct($message, $code = StatusCode::UNKNOW_ERROR, $args = null, \Throwable $previous = null)
     {
         parent::__construct($message, $code, $previous);
     }
+
 }

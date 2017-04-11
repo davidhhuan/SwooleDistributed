@@ -7,10 +7,10 @@
  * @link       http://www.cnblogs.com/davidhhuan
  * @license    The MIT License (MIT) https://opensource.org/licenses/MIT
  */
-namespace Yoke\Security;
+namespace Fayho\Security;
 
-use Yoke\Exception\StatusCode;
-use Yoke\Util\ResultUtil;
+use Fayho\Exception\StatusCode;
+use Fayho\Util\ResultUtil;
 
 /**
  * 提供基于PKCS7算法的加解密接口.

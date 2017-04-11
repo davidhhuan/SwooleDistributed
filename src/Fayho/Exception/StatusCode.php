@@ -8,7 +8,7 @@
  * @license    The MIT License (MIT) https://opensource.org/licenses/MIT
  */
 
-namespace Yoke\Exception;
+namespace Fayho\Exception;
 
 /**
  * 我是接口描述信息哦！

@@ -7,13 +7,13 @@
  * @link       http://www.cnblogs.com/davidhhuan
  * @license    The MIT License (MIT) https://opensource.org/licenses/MIT
  */
-namespace Yoke\Security;
+namespace Fayho\Security;
 
-use Yoke\Util\ResultUtil;
-use Yoke\Exception\StatusCode;
-use Yoke\Security\PKCS7Encoder;
-use Yoke\Util\StringUtil;
-use Yoke\Exception\SystemException;
+use Fayho\Util\ResultUtil;
+use Fayho\Exception\StatusCode;
+use Fayho\Security\PKCS7Encoder;
+use Fayho\Util\StringUtil;
+use Fayho\Exception\SystemException;
 
 /**
  * 提供接收和推送给消息的加解密接口.

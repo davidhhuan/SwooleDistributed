@@ -10,11 +10,11 @@
 namespace app\Controllers;
 
 use Server\CoreBase\Controller;
-use Yoke\Util\ResultUtil;
-use Yoke\Util\JsonUtil;
-use Yoke\Exception\StatusCode;
-use Yoke\Security\DataCrypt;
-use Yoke\Util\ArrayUtil;
+use Fayho\Util\ResultUtil;
+use Fayho\Util\JsonUtil;
+use Fayho\Exception\StatusCode;
+use Fayho\Security\DataCrypt;
+use Fayho\Util\ArrayUtil;
 
 /**
  * 我是类描述信息哦！
@@ -42,8 +42,8 @@ class BaseController extends Controller
         $this->appAccount = \app\Lib\Util\ObjectUtil::instance()->getAppAccount();
         $this->requestData = \app\Lib\Util\ObjectUtil::instance()->getRequestData();
         if (empty($this->appAccount) || empty($this->requestData)) {
-            throw new \Yoke\Exception\LogicException(
-            \Yoke\Exception\StatusCode::BAD_REQUEST['info'], \Yoke\Exception\StatusCode::BAD_REQUEST['status']
+            throw new \Fayho\Exception\LogicException(
+            \Fayho\Exception\StatusCode::BAD_REQUEST['info'], \Fayho\Exception\StatusCode::BAD_REQUEST['status']
             );
         }
     }
@@ -61,7 +61,7 @@ class BaseController extends Controller
     /**
      * 发送回API
      * 
-     * @param array $rs Yoke\Util\ResultUtil::returnRs
+     * @param array $rs Fayho\Util\ResultUtil::returnRs
      */
     public function sendApi($resultUtil)
     {
@@ -82,7 +82,7 @@ class BaseController extends Controller
                     $this->requestData['nonce'], 
                     $this->requestData['timestamp']
                     );
-            if (\Yoke\Util\DevUtil::isDebug()) {
+            if (\Fayho\Util\DevUtil::isDebug()) {
                 $resultUtilEnc['retval']['debug'] = $resultUtil['retval'];
             }
             $resultUtil = $resultUtilEnc;

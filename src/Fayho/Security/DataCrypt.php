@@ -6,14 +6,14 @@
  * @link       http://www.cnblogs.com/davidhhuan
  * @license    The MIT License (MIT) https://opensource.org/licenses/MIT
  */
-namespace Yoke\Security;
+namespace Fayho\Security;
 
-use Yoke\Security\Prpcrypt;
-use Yoke\Exception\StatusCode;
-use Yoke\Exception\SystemException;
-use Yoke\Security\Sha1;
-use Yoke\Util\ResultUtil;
-use Yoke\Util\StringUtil;
+use Fayho\Security\Prpcrypt;
+use Fayho\Exception\StatusCode;
+use Fayho\Exception\SystemException;
+use Fayho\Security\Sha1;
+use Fayho\Util\ResultUtil;
+use Fayho\Util\StringUtil;
 
 /**
  * 数据加密/解密
@@ -25,6 +25,8 @@ use Yoke\Util\StringUtil;
  */
 class DataCrypt
 {
+    const RANDOM_NONCE_LENGTH = 6;
+    
     /**
      * appID
      *
@@ -99,13 +101,13 @@ class DataCrypt
     public function encrypt($data, $nonce, $timestamp)
     {
         !is_string($data) && $data = json_encode($data);
-        empty($nonce) && $nonce = StringUtil::getRandomStr(6);
+        empty($nonce) && $nonce = StringUtil::getRandomStr(self::RANDOM_NONCE_LENGTH);
         empty($timestamp) && $timestamp = time();
         
         $pc = new Prpcrypt($this->encodingAesKey, $this->appId);
 
 		//加密
-		$ret = $pc->encrypt($data, $this->appId);
+		$ret = $pc->encrypt($data);
         if ($ret['status'] != StatusCode::SUCCESS['status']) {
             return $ret;
         }
@@ -153,7 +155,7 @@ class DataCrypt
     public function decrypt($data, $nonce, $timestamp, $signature)
     {
         !is_string($data) && $data = json_encode($data);
-        empty($nonce) && $nonce = StringUtil::getRandomStr(6);
+        empty($nonce) && $nonce = StringUtil::getRandomStr(self::RANDOM_NONCE_LENGTH);
         empty($timestamp) && $timestamp = time();
         
         //验证安全签名
@@ -167,7 +169,7 @@ class DataCrypt
 		}
         
 		$pc = new Prpcrypt($this->encodingAesKey, $this->appId);
-		$ret = $pc->decrypt($data, $this->appId);
+		$ret = $pc->decrypt($data);
         if ($ret['status'] != StatusCode::SUCCESS['status']) {
             return $ret;
         }

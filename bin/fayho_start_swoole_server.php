@@ -8,5 +8,5 @@
 defined('RUN_MODE') || define('RUN_MODE', 'dev');
 
 require_once __DIR__ . '/../vendor/autoload.php';
-$worker = new \app\YokeAppServer();
+$worker = new \app\FayhoAppServer();
 Server\SwooleServer::run();

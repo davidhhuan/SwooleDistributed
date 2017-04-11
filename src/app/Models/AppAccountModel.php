@@ -74,7 +74,7 @@ class AppAccountModel extends BaseModel
      */
     public function getAccessToken()
     {
-        $accessToken = md5(uniqid('YOKE', true));
+        $accessToken = md5(uniqid('FAYHO', true));
         $expired = 30*86400;
         $hashKey = $accessToken;
         yield $this->redis_pool->getCoroutine()->hMset(

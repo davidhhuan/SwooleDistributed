@@ -10,12 +10,12 @@
 namespace app\Lib\Security;
 
 use Swoole\Http\Request;
-use Yoke\Exception\LogicException;
-use Yoke\Exception\StatusCode;
-use Yoke\Util\JsonUtil;
+use Fayho\Exception\LogicException;
+use Fayho\Exception\StatusCode;
+use Fayho\Util\JsonUtil;
 use app\Models\AppAccountModel;
 use app\Lib\Util\ObjectUtil;
-use Yoke\Security\DataCrypt;
+use Fayho\Security\DataCrypt;
 
 /**
  * 校验请求
@@ -96,7 +96,7 @@ class VerifyRequest
                     );
         }
         $this->checkRequestData($appAccount, $requestData);
-        $requestData = \Yoke\Util\ArrayUtil::mergeArray($transData, ['data' => $requestData]);
+        $requestData = \Fayho\Util\ArrayUtil::mergeArray($transData, ['data' => $requestData]);
         ObjectUtil::instance()->setRequestData($requestData);
         
         return [

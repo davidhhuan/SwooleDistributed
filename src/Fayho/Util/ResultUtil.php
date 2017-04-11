@@ -7,9 +7,9 @@
  * @link       http://www.cnblogs.com/davidhhuan
  * @license    The MIT License (MIT) https://opensource.org/licenses/MIT
  */
-namespace Yoke\Util;
+namespace Fayho\Util;
 
-use Yoke\Exception\SystemException;
+use Fayho\Exception\SystemException;
 /**
  * 我是类描述信息哦！
  *

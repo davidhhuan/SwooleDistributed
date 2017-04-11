@@ -25,7 +25,7 @@ class BaseModel extends Model
     
     protected $requestData;
 
-    const DATA_TABLE_PREFIX = 'yokem_';
+    const DATA_TABLE_PREFIX = 'fayho_';
     
     /**
      * 表名
