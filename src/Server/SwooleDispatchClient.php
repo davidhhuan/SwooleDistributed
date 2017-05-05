@@ -1,8 +1,9 @@
 <?php
 namespace Server;
 
+use Monolog\Handler\RotatingFileHandler;
+use Monolog\Logger;
 use Noodlehaus\Exception;
-use Server\Asyn\AsynPoolManager;
 use Server\Asyn\Redis\RedisAsynPool;
 
 /**
@@ -26,15 +27,10 @@ class SwooleDispatchClient extends SwooleServer
      */
     protected $redis_pool;
     /**
-     * @var AsynPoolManager
-     */
-    protected $asnyPoolManager;
-    /**
-     * 异步进程
+     * 连接池
      * @var
      */
-    protected $pool_process;
-
+    private $asynPools;
     /**
      * SwooleDispatchClient constructor.
      */
@@ -110,13 +106,6 @@ class SwooleDispatchClient extends SwooleServer
         parent::onSwooleWorkerStart($serv, $workerId);
         $this->initAsynPools();
         $this->redis_pool = $this->asynPools['redisPool'];
-        if (!$serv->taskworker) {
-            //注册
-            $this->asnyPoolManager = new AsynPoolManager($this->pool_process, $this);
-            foreach ($this->asynPools as $pool) {
-                $this->asnyPoolManager->registAsyn($pool);
-            }
-        }
     }
 
     /**
@@ -201,7 +190,7 @@ class SwooleDispatchClient extends SwooleServer
         //心跳包
         $heartData = $this->encode($this->packSerevrMessageBody(SwooleMarco::MSG_TYPE_HEART, null));
         if (!isset($cli->tick)) {
-            $cli->tick = swoole_timer_tick(60000, function () use ($cli, $heartData) {
+            $cli->tick = swoole_timer_tick($this->config['dispatch_heart_time'], function () use ($cli, $heartData) {
                 $cli->send($heartData);
             });
         }
@@ -214,7 +203,7 @@ class SwooleDispatchClient extends SwooleServer
      */
     public function onClientReceive($cli, $client_data)
     {
-        $data = substr($client_data, $this->package_length_type_length);
+        $data = $this->unEncode($client_data);
         $unserialize_data = unserialize($data);
         $type = $unserialize_data['type']??'';
         $message = $unserialize_data['message']??'';
@@ -300,6 +289,7 @@ class SwooleDispatchClient extends SwooleServer
         $address = $cli->address;
         unset($this->server_clients[ip2long($cli->address)]);
         unset($cli);
+        //重连
         $this->addServerClient($address);
     }
 
@@ -309,11 +299,22 @@ class SwooleDispatchClient extends SwooleServer
      */
     public function onClientError($cli)
     {
-        print_r("error\n");
         if (isset($cli->tick)) {
             swoole_timer_clear($cli->tick);
         }
         unset($this->server_clients[ip2long($cli->address)]);
         unset($cli);
+    }
+
+    /**
+     * 设置monolog的loghandler
+     */
+    public function setLogHandler()
+    {
+        $this->log = new Logger($this->name);
+        $this->log->pushHandler(new RotatingFileHandler(__DIR__ . $this->config['log']['file']['log_path'] . $this->name . '.log',
+            $this->config['log']['file']['log_max_files'],
+            $this->config['log']['log_level']));
+
     }
 }

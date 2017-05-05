@@ -7,6 +7,7 @@
  */
 namespace Server\Controllers;
 
+use Server\Asyn\TcpClient\SdTcpRpcPool;
 use Server\Components\Consul\ConsulServices;
 use Server\CoreBase\Controller;
 use Server\CoreBase\SelectCoroutine;
@@ -25,6 +26,28 @@ class TestController extends Controller
      * @var TestModel
      */
     public $testModel;
+
+    /**
+     * @var SdTcpRpcPool
+     */
+    public $sdrpc;
+
+
+    public function http_tcp()
+    {
+        $this->sdrpc = get_instance()->getAsynPool('RPC');
+        $data = $this->sdrpc->helpToBuildSDControllerQuest($this->context, 'MathService', 'add');
+        $data['params'] = [1, 2];
+        $result = yield $this->sdrpc->coroutineSend($data);
+        $this->http_output->end($result);
+    }
+
+    public function http_ex()
+    {
+        throw new \Exception("1");
+        $value = yield $this->redis_pool->getCoroutine()->ping();
+
+    }
 
     public function http_mysql()
     {
@@ -143,6 +166,11 @@ class TestController extends Controller
         $this->http_output->end($sum);
     }
 
+    public function http_redirect()
+    {
+        $this->redirectController('TestController', 'test');
+    }
+
     /**
      * health
      */
@@ -205,21 +233,6 @@ class TestController extends Controller
         $this->http_output->end($result);
     }
 
-    public function http_startInterruptedTask()
-    {
-        $testTask = $this->loader->task('TestTask', $this);
-        $task_id = $testTask->testInterrupted();
-        $testTask->startTask(null);
-        $this->http_output->end("task_id = $task_id");
-    }
-
-    public function http_interruptedTask()
-    {
-        $task_id = $this->http_input->getPost('task_id');
-        get_instance()->interruptedTask($task_id);
-        $this->http_output->end("ok");
-    }
-
     public function http_getAllTask()
     {
         $messages = get_instance()->getServerAllTaskMessage();
@@ -278,4 +291,31 @@ class TestController extends Controller
         $this->http_output->end($reuslt);
     }
 
+    public function http_testConsul3()
+    {
+        $rest = ConsulServices::getInstance()->getRPCService('MathService', $this->context);
+        $reuslt = yield $rest->call('add', [1, 2], true);
+        $this->http_output->end($reuslt);
+    }
+
+    public function http_testRedisLua()
+    {
+        $value = yield $this->redis_pool->getCoroutine()->evalSha(getLuaSha1('sadd_from_count'), ['testlua', 100], 2);
+        $this->http_output->end($value);
+    }
+
+    public function http_testTaskStop()
+    {
+        $task = $this->loader->task('TestTask', $this);
+        $task->testStop();
+        yield $task->coroutineSend();
+    }
+
+    public function http_testLeader()
+    {
+        $ConsulModel = $this->loader->model('ConsulModel',$this);
+        $result = yield $ConsulModel->leader();
+        var_dump($result);
+        $this->http_output->end($result);
+    }
 }
