@@ -66,12 +66,14 @@ class BaseController extends Controller
     public function sendApi($resultUtil)
     {
         if ($resultUtil['status'] == StatusCode::SUCCESS['status']) {
-            $resultUtil['retval'] = ArrayUtil::mergeArray(
+            if (!empty($this->requestData['data']['callback'])) {
+                $resultUtil['retval'] = ArrayUtil::mergeArray(
                     $resultUtil['retval'], 
                     [
                         'callback' => $this->requestData['data']['callback'], 
                     ]
                     );
+            }
             $dataCrypt = new DataCrypt(
                     $this->appAccount['app_id'], 
                     $this->requestData['token'], 

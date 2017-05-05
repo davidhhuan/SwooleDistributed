@@ -30,7 +30,7 @@ class LogicException extends \LogicException
      * @param mixed      $args
      * @param \Throwable $previous
      */
-    public function __construct($message, $code = StatusCode::UNKNOW_ERROR, $args = null, \Throwable $previous = null)
+    public function __construct($message, $code = StatusCode::UNKNOW_ERROR['status'], $args = null, \Throwable $previous = null)
     {
         parent::__construct($message, $code, $previous);
     }

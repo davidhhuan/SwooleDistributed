@@ -86,7 +86,7 @@ class VerifyRequest
                     );
         }
         if ($rsDecrypt['status'] != StatusCode::SUCCESS['status']) {
-            throw new LogicException($rsDecrypt['status'], $rsDecrypt['info']);
+            throw new LogicException($rsDecrypt['info'], $rsDecrypt['status']);
         }
         $requestData = JsonUtil::decode($rsDecrypt['retval']['data']);
         if (empty($requestData)) {

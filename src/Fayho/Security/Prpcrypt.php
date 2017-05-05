@@ -39,8 +39,8 @@ class Prpcrypt
         if (strlen($key2) < 16) {
             throw new SystemException('The length of the key2 must be greater then 16.');
         }
-        $this->key1 = base64_decode($key1 . "=");
-        $this->key2 = base64_decode($key2 . "=");
+        $this->key1 = md5($key1 . "=");
+        $this->key2 = md5($key2 . "=");
     }
     
     /**
@@ -74,6 +74,9 @@ class Prpcrypt
         //获得16位随机字符串，填充到明文之前
         $random = StringUtil::getRandomStr();
         $plaintext = $random . pack("N", strlen($plaintext)) . $plaintext;
+        
+        //使用自定义的填充方式对明文进行补位填充
+        $plaintext = PKCS7Encoder::encode($plaintext);
         
         $ciphertext = openssl_encrypt($plaintext,  'AES-256-CBC', $this->getKey(), OPENSSL_RAW_DATA, $this->getIv());
         if ($ciphertext === false) {
@@ -129,6 +132,8 @@ class Prpcrypt
         }
         $contentRs = '';
         try {
+            //去除补位字符
+            $plaintext = PKCS7Encoder::decode($plaintext);
             //去除16位随机字符串,网络字节序
             if (strlen($plaintext) < 16) {
                 return ResultUtil::returnRs(StatusCode::SUCCESS, ['decrypt' => $contentRs]);

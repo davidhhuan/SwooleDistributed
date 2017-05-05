@@ -28,7 +28,7 @@ class CommonController extends Controller
      */
     public function http_timestamp()
     {
-        $this->http_output->end(time());
+        $this->http_output->end(time()."");
     }
 
 }
